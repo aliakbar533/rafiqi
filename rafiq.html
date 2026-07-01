@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#0A0E1A"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="رفيق"/>
+<title>رفيق — مساعدك الشخصي</title>
+<link rel="manifest" href="manifest.json"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0A0E1A;font-family:'Segoe UI',system-ui,sans-serif;direction:rtl;overflow:hidden}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-6px);opacity:1}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,212,170,.4)}50%{box-shadow:0 0 0 8px rgba(0,212,170,0)}}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#1E2A3A;border-radius:4px}
+textarea{resize:none;font-family:inherit}textarea:focus{outline:none}
+button{font-family:inherit;cursor:pointer}
+select{background:#111827;color:#E8F4FD;border:1px solid #1E3A5F;border-radius:8px;padding:6px 10px;font-size:12px;width:100%;direction:rtl;font-family:inherit}
+select:focus{outline:none;border-color:#00D4AA}
+input[type=range]{width:100%;accent-color:#00D4AA}
+
+#app{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* HEADER */
+#header{background:linear-gradient(135deg,#0D1B2A,#112240);border-bottom:1px solid #1E3A5F;padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:20}
+#avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#00D4AA,#0099FF);display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 0 16px rgba(0,212,170,.3);flex-shrink:0}
+#avatar.speaking{animation:pulse 1s infinite}
+#rafiq-name{color:#E8F4FD;font-weight:700;font-size:16px}
+#rafiq-status{font-size:11px;display:flex;align-items:center;gap:4px}
+#status-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+#header-btns{margin-right:auto;display:flex;gap:6px;flex-wrap:wrap}
+.hbtn{border-radius:8px;padding:5px 10px;font-size:11px;border:1px solid #1E3A5F;background:#1A2744;color:#00D4AA}
+.hbtn.active{background:#00D4AA22;border-color:#00D4AA}
+.hbtn.voice-on{color:#FFB800;border-color:#FFB800;background:#FFB80011}
+
+/* BODY */
+#body{flex:1;display:flex;overflow:hidden}
+
+/* PANELS */
+.panel{background:#0D1B2A;border-left:1px solid #1E3A5F;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;width:270px}
+.panel-title{padding:14px 16px;border-bottom:1px solid #1E3A5F;color:#4A6785;font-size:12px}
+
+/* SESSIONS */
+.sess-item{padding:10px 12px;border-radius:10px;cursor:pointer;margin-bottom:6px;border:1px solid transparent;display:flex;align-items:flex-start;gap:8px;transition:background .15s}
+.sess-item:hover{background:#1A2744}
+.sess-item.active{background:#1A2744;border-color:#1E3A5F}
+.sess-preview{color:#C8D8E8;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sess-time{color:#2A4060;font-size:10px;margin-top:3px}
+.del-btn{background:none;border:none;color:#2A4060;font-size:14px;padding:2px;transition:color .15s;flex-shrink:0}
+.del-btn:hover{color:#FF4444}
+
+/* CHAT */
+#chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#messages{flex:1;overflow-y:auto;padding:20px 16px;display:flex;flex-direction:column;gap:12px;max-width:760px;width:100%;margin:0 auto}
+.msg-row{display:flex;align-items:flex-end;gap:8px;animation:fadeIn .3s ease}
+.msg-row.user{flex-direction:row-reverse}
+.bot-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00D4AA,#0099FF);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.bot-avatar.speaking{animation:pulse 1s infinite}
+.bubble{max-width:73%}
+.bubble-text{padding:11px 14px;color:#E8F4FD;font-size:14px;line-height:1.7;white-space:pre-wrap}
+.bubble-text.bot{border-radius:18px 18px 18px 4px;background:#111827;border:1px solid #1E3A5F;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.bubble-text.user{border-radius:18px 18px 4px 18px;background:linear-gradient(135deg,#0099FF,#0066CC);box-shadow:0 2px 12px rgba(0,153,255,.2)}
+.bubble-meta{display:flex;align-items:center;gap:6px;margin-top:3px;padding:0 4px}
+.bubble-meta.bot{justify-content:flex-end}
+.bubble-meta.user{justify-content:flex-start}
+.msg-time{color:#2A4060;font-size:10px}
+.speak-btn{background:transparent;border:1px solid #1E3A5F;border-radius:6px;color:#4A6785;padding:2px 7px;font-size:10px;transition:background .15s}
+.speak-btn:hover{background:#1A2744}
+.speak-btn.stop{background:#1A2744;border-color:#FF4444;color:#FF4444}
+
+/* TYPING */
+#typing{display:none;align-items:flex-end;gap:8px;animation:fadeIn .3s ease}
+#typing.show{display:flex}
+.dot{width:8px;height:8px;border-radius:50%;background:#00D4AA;animation:bounce 1.2s infinite}
+
+/* QUICK ACTIONS */
+#quick{padding:0 16px 10px;max-width:760px;width:100%;margin:0 auto}
+#quick-label{color:#2A4060;font-size:11px;margin-bottom:8px;text-align:center}
+#quick-btns{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+.qbtn{background:#111827;border:1px solid #1E3A5F;border-radius:20px;color:#00D4AA;padding:7px 13px;font-size:12px}
+
+/* INPUT */
+#input-bar{background:#0D1B2A;border-top:1px solid #1E3A5F;padding:12px 16px;flex-shrink:0}
+#input-inner{max-width:760px;margin:0 auto;display:flex;gap:8px;align-items:flex-end}
+#textarea-wrap{flex:1;background:#111827;border:1px solid #1E3A5F;border-radius:16px;padding:10px 14px;transition:border-color .2s}
+#textarea-wrap:focus-within{border-color:#00D4AA}
+#msg-input{background:transparent;border:none;color:#E8F4FD;font-size:14px;width:100%;direction:rtl;line-height:1.6;max-height:100px;overflow-y:auto}
+#send-btn{width:42px;height:42px;border-radius:50%;border:none;background:linear-gradient(135deg,#00D4AA,#0099FF);color:#fff;font-size:17px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 12px rgba(0,212,170,.35);transition:all .2s}
+#send-btn:disabled{background:#1A2744;box-shadow:none;cursor:not-allowed}
+#stop-btn{width:40px;height:40px;border-radius:50%;border:1px solid #FF4444;background:#1A2744;color:#FF4444;font-size:16px;display:none;align-items:center;justify-content:center;flex-shrink:0}
+#stop-btn.show{display:flex}
+#input-hint{text-align:center;color:#2A4060;font-size:10px;margin-top:5px}
+
+/* VOICE PANEL */
+.toggle-wrap{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding:10px 14px;background:#111827;border-radius:10px;border:1px solid #1E3A5F}
+.toggle-label{color:#C8D8E8;font-size:13px}
+.toggle{width:44px;height:24px;border-radius:12px;background:#1A2744;border:1px solid #1E3A5F;position:relative;cursor:pointer;transition:all .2s;flex-shrink:0}
+.toggle.on{background:#00D4AA;border-color:#00D4AA}
+.toggle.on2{background:#0099FF;border-color:#0099FF}
+.toggle-knob{width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s}
+.toggle.on .toggle-knob,.toggle.on2 .toggle-knob{left:22px}
+.slider-row{margin-bottom:16px}
+.slider-label{color:#4A6785;font-size:11px;margin-bottom:6px;display:flex;justify-content:space-between}
+.slider-ends{display:flex;justify-content:space-between;color:#2A4060;font-size:10px}
+.test-btn{width:100%;background:linear-gradient(135deg,#00D4AA,#0099FF);border:none;border-radius:10px;color:#fff;padding:10px;font-size:13px}
+.stop-voice-btn{width:100%;margin-top:8px;background:#1A2744;border:1px solid #FF4444;border-radius:10px;color:#FF4444;padding:8px;font-size:12px;display:none}
+.stop-voice-btn.show{display:block}
+.warn-box{background:#1A1010;border:1px solid #FF444433;border-radius:10px;padding:12px 14px;color:#FF8888;font-size:12px;line-height:1.7;margin-bottom:16px}
+.section-label{color:#4A6785;font-size:11px;margin-bottom:6px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div id="avatar">🤖</div>
+    <div>
+      <div id="rafiq-name">رفيق</div>
+      <div id="rafiq-status">
+        <span id="status-dot" style="background:#00D4AA"></span>
+        <span id="status-text" style="color:#00D4AA">جاهز</span>
+      </div>
+    </div>
+    <div id="header-btns">
+      <button class="hbtn" onclick="newChat()">+ جديد</button>
+      <button class="hbtn" id="voice-btn" onclick="togglePanel('voice')">🔊 الصوت</button>
+      <button class="hbtn" id="hist-btn" onclick="togglePanel('hist')">📋 السجل</button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div id="body">
+
+    <!-- VOICE PANEL -->
+    <div class="panel" id="voice-panel" style="display:none">
+      <div class="panel-title">⚙️ إعدادات الصوت</div>
+      <div style="flex:1;overflow-y:auto;padding:16px">
+        <div class="warn-box" id="tts-warn" style="display:none">
+          ⚠️ الصوت مو مدعوم على هذا المتصفح.<br/>افتح رفيق من Chrome على الكمبيوتر.
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-label">تفعيل الصوت</span>
+          <div class="toggle" id="tgl-voice" onclick="toggleVoice()"><div class="toggle-knob"></div></div>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-label">قراءة تلقائية</span>
+          <div class="toggle" id="tgl-auto" onclick="toggleAuto()"><div class="toggle-knob"></div></div>
+        </div>
+        <div style="margin-bottom:16px">
+          <div class="section-label">الصوت</div>
+          <select id="voice-select" onchange="saveVoiceSettings()"></select>
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>السرعة</span><span id="rate-val" style="color:#00D4AA">0.85x</span></div>
+          <input type="range" id="rate-slider" min="0.3" max="2" step="0.05" value="0.85" oninput="updateSlider('rate')"/>
+          <div class="slider-ends"><span>بطيء</span><span>سريع</span></div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>مستوى الصوت</span><span id="vol-val" style="color:#00D4AA">100%</span></div>
+          <input type="range" id="vol-slider" min="0" max="1" step="0.05" value="1" oninput="updateSlider('vol')"/>
+          <div class="slider-ends"><span>هادي</span><span>عالي</span></div>
+        </div>
+        <div class="slider-row" style="margin-bottom:20px">
+          <div class="slider-label"><span>طبقة الصوت</span><span id="pitch-val" style="color:#00D4AA">1.0</span></div>
+          <input type="range" id="pitch-slider" min="0.5" max="2" step="0.1" value="1" oninput="updateSlider('pitch')"/>
+          <div class="slider-ends"><span>عميق</span><span>حاد</span></div>
+        </div>
+        <button class="test-btn" onclick="testVoice()">🔊 اختبر الصوت</button>
+        <button class="stop-voice-btn" id="stop-voice-btn" onclick="stopSpeaking()">⏹ إيقاف</button>
+      </div>
+    </div>
+
+    <!-- HISTORY PANEL -->
+    <div class="panel" id="hist-panel" style="display:none;width:260px">
+      <div class="panel-title">المحادثات المحفوظة</div>
+      <div id="sessions-list" style="flex:1;overflow-y:auto;padding:8px">
+        <div style="color:#2A4060;font-size:13px;text-align:center;margin-top:30px">لا يوجد محادثات</div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div id="chat-area">
+      <div id="messages"></div>
+
+      <!-- TYPING -->
+      <div style="padding:0 16px;max-width:760px;width:100%;margin:0 auto">
+        <div id="typing">
+          <div class="bot-avatar">🤖</div>
+          <div style="background:#111827;border:1px solid #1E3A5F;border-radius:18px 18px 18px 4px;padding:12px 16px;display:flex;gap:5px;align-items:center">
+            <div class="dot" style="animation-delay:0s"></div>
+            <div class="dot" style="animation-delay:.2s"></div>
+            <div class="dot" style="animation-delay:.4s"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div id="quick">
+        <div id="quick-label">اختر سؤال سريع</div>
+        <div id="quick-btns">
+          <button class="qbtn" onclick="setInput('ساعدني بكود Python')">ساعدني بكود Python</button>
+          <button class="qbtn" onclick="setInput('شلون أبدأ بـ Kali Linux؟')">شلون أبدأ بـ Kali Linux؟</button>
+          <button class="qbtn" onclick="setInput('كيف أحمي موقعي؟')">كيف أحمي موقعي؟</button>
+          <button class="qbtn" onclick="setInput('ساعدني أصيغ رسالة')">ساعدني أصيغ رسالة</button>
+        </div>
+      </div>
+
+      <!-- INPUT -->
+      <div id="input-bar">
+        <div id="input-inner">
+          <button id="stop-btn" onclick="stopSpeaking()">⏹</button>
+          <div id="textarea-wrap">
+            <textarea id="msg-input" rows="1" placeholder="اسأل رفيق أي شي..." oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+          </div>
+          <button id="send-btn" onclick="sendMessage()" disabled>↑</button>
+        </div>
+        <div id="input-hint">Enter للإرسال • Shift+Enter لسطر جديد</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SYSTEM_PROMPT = `أنت "رفيق" — مساعد ذكي شخصي مخصص لـ علي أكبر، مبرمج عراقي من بابل/بغداد.
+
+معلوماتك عنه:
+- مبرمج Python/Flask/Django، يبني مواقع للعملاء على PythonAnywhere
+- خلفية في C++، JavaScript، Linux، شبكات
+- يتعلم سايبر سيكيوريتي (Kali Linux، اختراق أخلاقي، حماية)
+- يعمل على chatbot بـ Gemini API + MongoDB
+- لديه إعاقة سمعية (سمع ثقيل) — تعامل معه بوضوح ودقة
+- يتحدث العربية العراقية
+
+شخصيتك:
+- صديق تقني حقيقي، مباشر وصريح بدون مجاملات فارغة
+- تتكلم بالعربية العراقية الطبيعية
+- تساعده في: كود، IT، سايبر سيكيوريتي، مشاريع، حوار اجتماعي، Kali Linux
+- إذا سألك عن شي ما تعرفه، قول بصراحة
+- اختصر وكن دقيق — لا تطول بدون فائدة
+- تنبهه للمخاطر والأخطاء بصراحة
+- ساعده يتعلم ويرتزق ويكون بأمان`;
+
+// ─── STATE ───
+let messages = [];
+let sessions = [];
+let currentSessionId = null;
+let voiceEnabled = false;
+let autoSpeak = false;
+let voiceRate = 0.85, voicePitch = 1.0, voiceVolume = 1.0;
+let selectedVoiceName = null;
+let speaking = false;
+let speakingIdx = null;
+let availableVoices = [];
+const ttsSupported = !!window.speechSynthesis;
+
+const STORAGE = 'rafiq';
+const store = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  del: k => { try { localStorage.removeItem(k); } catch {} }
+};
+
+// ─── INIT ───
+function init() {
+  if (!ttsSupported) {
+    document.getElementById('tts-warn').style.display = 'block';
+    document.getElementById('voice-btn').style.opacity = '0.5';
+  } else {
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+  }
+
+  // Load voice settings
+  const vs = store.get(STORAGE+'-voice');
+  if (vs) {
+    voiceEnabled = vs.enabled || false;
+    autoSpeak = vs.autoSpeak || false;
+    voiceRate = vs.rate || 0.85;
+    voicePitch = vs.pitch || 1.0;
+    voiceVolume = vs.volume || 1.0;
+    selectedVoiceName = vs.voice || null;
+    applyVoiceUI();
+  }
+
+  // Load sessions
+  sessions = store.get(STORAGE+'-sessions') || [];
+  renderSessions();
+
+  // Load last session
+  if (sessions.length > 0) {
+    const last = sessions[0];
+    const hist = store.get(STORAGE+'-chat-'+last.id);
+    if (hist && hist.length > 0) {
+      messages = hist;
+      currentSessionId = last.id;
+      renderMessages();
+      document.getElementById('quick').style.display = 'none';
+      return;
+    }
+  }
+
+  // Welcome
+  addMessage('assistant', 'هلا علي أكبر 👋\nأنا رفيق — مساعدك الشخصي.\nاسألني بأي شي: كود، سايبر، مشاريع، أو أي شي ثاني.', false);
+}
+
+// ─── VOICES ───
+function loadVoices() {
+  availableVoices = speechSynthesis.getVoices();
+  const sel = document.getElementById('voice-select');
+  sel.innerHTML = '';
+  const ar = availableVoices.filter(v => v.lang.startsWith('ar'));
+  const other = availableVoices.filter(v => !v.lang.startsWith('ar'));
+  if (ar.length) {
+    const g = document.createElement('optgroup'); g.label = 'عربي';
+    ar.forEach(v => { const o = document.createElement('option'); o.value = v.name; o.textContent = v.name; g.appendChild(o); });
+    sel.appendChild(g);
+  }
+  const g2 = document.createElement('optgroup'); g2.label = 'أخرى';
+  other.slice(0,15).forEach(v => { const o = document.createElement('option'); o.value = v.name; o.textContent = `${v.name} (${v.lang})`; g2.appendChild(o); });
+  sel.appendChild(g2);
+  if (!selectedVoiceName) {
+    selectedVoiceName = (ar[0] || availableVoices[0])?.name || null;
+  }
+  if (selectedVoiceName) sel.value = selectedVoiceName;
+}
+
+// ─── VOICE CONTROLS ───
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  if (!voiceEnabled) stopSpeaking();
+  document.getElementById('tgl-voice').classList.toggle('on', voiceEnabled);
+  saveVoiceSettings();
+  renderMessages();
+}
+function toggleAuto() {
+  autoSpeak = !autoSpeak;
+  document.getElementById('tgl-auto').classList.toggle('on2', autoSpeak);
+  saveVoiceSettings();
+}
+function updateSlider(type) {
+  if (type==='rate') { voiceRate = parseFloat(document.getElementById('rate-slider').value); document.getElementById('rate-val').textContent = voiceRate.toFixed(2)+'x'; }
+  if (type==='vol') { voiceVolume = parseFloat(document.getElementById('vol-slider').value); document.getElementById('vol-val').textContent = Math.round(voiceVolume*100)+'%'; }
+  if (type==='pitch') { voicePitch = parseFloat(document.getElementById('pitch-slider').value); document.getElementById('pitch-val').textContent = voicePitch.toFixed(1); }
+  saveVoiceSettings();
+}
+function saveVoiceSettings() {
+  selectedVoiceName = document.getElementById('voice-select')?.value || selectedVoiceName;
+  store.set(STORAGE+'-voice', { enabled:voiceEnabled, autoSpeak, rate:voiceRate, pitch:voicePitch, volume:voiceVolume, voice:selectedVoiceName });
+}
+function applyVoiceUI() {
+  document.getElementById('tgl-voice').classList.toggle('on', voiceEnabled);
+  document.getElementById('tgl-auto').classList.toggle('on2', autoSpeak);
+  document.getElementById('rate-slider').value = voiceRate;
+  document.getElementById('rate-val').textContent = voiceRate.toFixed(2)+'x';
+  document.getElementById('vol-slider').value = voiceVolume;
+  document.getElementById('vol-val').textContent = Math.round(voiceVolume*100)+'%';
+  document.getElementById('pitch-slider').value = voicePitch;
+  document.getElementById('pitch-val').textContent = voicePitch.toFixed(1);
+}
+function speak(text, idx) {
+  if (!ttsSupported) return;
+  speechSynthesis.cancel();
+  const clean = text.replace(/[*_`#>]/g,'').replace(/\n+/g,' ').trim();
+  const utt = new SpeechSynthesisUtterance(clean);
+  const voice = availableVoices.find(v => v.name === selectedVoiceName);
+  if (voice) utt.voice = voice;
+  utt.rate = voiceRate; utt.pitch = voicePitch; utt.volume = voiceVolume;
+  utt.lang = voice?.lang || 'ar';
+  utt.onstart = () => { speaking=true; speakingIdx=idx; updateSpeakingUI(); };
+  utt.onend = utt.onerror = () => { speaking=false; speakingIdx=null; updateSpeakingUI(); };
+  speechSynthesis.speak(utt);
+}
+function stopSpeaking() { if (ttsSupported) speechSynthesis.cancel(); speaking=false; speakingIdx=null; updateSpeakingUI(); }
+function testVoice() { speak('هلا علي أكبر، أنا رفيق مساعدك الشخصي، الصوت شغال زين.', null); }
+function updateSpeakingUI() {
+  const av = document.getElementById('avatar');
+  const sd = document.getElementById('status-dot');
+  const st = document.getElementById('status-text');
+  const sb = document.getElementById('stop-btn');
+  const svb = document.getElementById('stop-voice-btn');
+  if (speaking) {
+    av.classList.add('speaking'); sd.style.background='#FFB800'; st.style.color='#FFB800'; st.textContent='يتكلم...';
+    sb.classList.add('show'); svb.classList.add('show');
+  } else {
+    av.classList.remove('speaking'); sd.style.background='#00D4AA'; st.style.color='#00D4AA'; st.textContent='جاهز';
+    sb.classList.remove('show'); svb.classList.remove('show');
+  }
+  // update speak buttons
+  document.querySelectorAll('.speak-btn').forEach((btn,i) => {
+    if (speakingIdx === parseInt(btn.dataset.idx)) { btn.textContent='⏹'; btn.classList.add('stop'); btn.onclick=stopSpeaking; }
+    else { btn.textContent='🔊'; btn.classList.remove('stop'); btn.onclick=()=>speak(messages[parseInt(btn.dataset.idx)].content, parseInt(btn.dataset.idx)); }
+  });
+}
+
+// ─── PANELS ───
+function togglePanel(which) {
+  const vp = document.getElementById('voice-panel');
+  const hp = document.getElementById('hist-panel');
+  const vb = document.getElementById('voice-btn');
+  const hb = document.getElementById('hist-btn');
+  if (which==='voice') {
+    const open = vp.style.display==='none';
+    vp.style.display = open?'flex':'none'; hp.style.display='none';
+    vb.classList.toggle('active', open); hb.classList.remove('active');
+  } else {
+    const open = hp.style.display==='none';
+    hp.style.display = open?'flex':'none'; vp.style.display='none';
+    hb.classList.toggle('active', open); vb.classList.remove('active');
+  }
+}
+
+// ─── MESSAGES ───
+function formatTime(ts) {
+  return new Date(ts).toLocaleString('ar-IQ',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'});
+}
+function addMessage(role, content, save=true) {
+  const msg = {role, content, ts: Date.now()};
+  messages.push(msg);
+  renderOneMessage(msg, messages.length-1);
+  if (save && role==='assistant' && voiceEnabled && autoSpeak) setTimeout(()=>speak(content, messages.length-1), 300);
+  scrollBottom();
+  if (messages.length > 1) document.getElementById('quick').style.display='none';
+  if (save) saveSession();
+}
+function renderOneMessage(msg, idx) {
+  const container = document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + msg.role;
+  const isBot = msg.role==='assistant';
+  let html = '';
+  if (isBot) html += `<div class="bot-avatar${speakingIdx===idx?' speaking':''}">🤖</div>`;
+  html += `<div class="bubble">
+    <div class="bubble-text ${isBot?'bot':'user'}">${escHtml(msg.content)}</div>
+    <div class="bubble-meta ${isBot?'bot':'user'}">
+      <span class="msg-time">${formatTime(msg.ts)}</span>
+      ${isBot && voiceEnabled ? `<button class="speak-btn" data-idx="${idx}" onclick="speak(messages[${idx}].content,${idx})">🔊</button>` : ''}
+    </div>
+  </div>`;
+  row.innerHTML = html;
+  container.appendChild(row);
+}
+function renderMessages() {
+  document.getElementById('messages').innerHTML='';
+  messages.forEach((m,i) => renderOneMessage(m,i));
+  scrollBottom();
+}
+function escHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>'); }
+function scrollBottom() { setTimeout(()=>{ const m=document.getElementById('messages'); m.scrollTop=m.scrollHeight; }, 50); }
+
+// ─── SESSIONS ───
+function saveSession() {
+  if (!currentSessionId) currentSessionId = 's-'+Date.now();
+  store.set(STORAGE+'-chat-'+currentSessionId, messages);
+  const preview = messages.find(m=>m.role==='user')?.content?.slice(0,40) || 'محادثة جديدة';
+  const updated = sessions.filter(s=>s.id!==currentSessionId);
+  sessions = [{id:currentSessionId, preview, ts:Date.now()}, ...updated].slice(0,20);
+  store.set(STORAGE+'-sessions', sessions);
+  renderSessions();
+}
+function renderSessions() {
+  const list = document.getElementById('sessions-list');
+  const hb = document.getElementById('hist-btn');
+  hb.textContent = sessions.length ? `📋 (${sessions.length})` : '📋 السجل';
+  if (!sessions.length) { list.innerHTML='<div style="color:#2A4060;font-size:13px;text-align:center;margin-top:30px">لا يوجد محادثات</div>'; return; }
+  list.innerHTML = sessions.map(s => `
+    <div class="sess-item${s.id===currentSessionId?' active':''}" onclick="loadSession('${s.id}')">
+      <div style="flex:1;min-width:0">
+        <div class="sess-preview">${escHtml(s.preview)}</div>
+        <div class="sess-time">${formatTime(s.ts)}</div>
+      </div>
+      <button class="del-btn" onclick="event.stopPropagation();deleteSession('${s.id}')">✕</button>
+    </div>`).join('');
+}
+function loadSession(id) {
+  const hist = store.get(STORAGE+'-chat-'+id);
+  if (hist) { messages=hist; currentSessionId=id; renderMessages(); document.getElementById('quick').style.display='none'; renderSessions(); }
+}
+function deleteSession(id) {
+  store.del(STORAGE+'-chat-'+id);
+  sessions = sessions.filter(s=>s.id!==id);
+  store.set(STORAGE+'-sessions', sessions);
+  if (currentSessionId===id) newChat();
+  else renderSessions();
+}
+function newChat() {
+  stopSpeaking();
+  messages=[]; currentSessionId=null;
+  document.getElementById('messages').innerHTML='';
+  document.getElementById('quick').style.display='block';
+  addMessage('assistant','هلا علي أكبر 👋\nأنا رفيق — مساعدك الشخصي.\nاسألني بأي شي: كود، سايبر، مشاريع، أو أي شي ثاني.', false);
+  renderSessions();
+  document.getElementById('hist-panel').style.display='none';
+  document.getElementById('voice-panel').style.display='none';
+}
+
+// ─── SEND ───
+async function sendMessage() {
+  const inp = document.getElementById('msg-input');
+  const text = inp.value.trim();
+  if (!text || document.getElementById('send-btn').disabled) return;
+  stopSpeaking();
+  inp.value=''; inp.style.height='auto';
+  document.getElementById('send-btn').disabled=true;
+  addMessage('user', text, false);
+  document.getElementById('quick').style.display='none';
+  showTyping(true);
+
+  try {
+    const apiMsgs = messages.map(m=>({role:m.role, content:m.content}));
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:SYSTEM_PROMPT,messages:apiMsgs})
+    });
+    const data = await res.json();
+    const reply = data.content?.find(b=>b.type==='text')?.text || 'ما قدرت أرد، جرب مرة ثانية.';
+    showTyping(false);
+    addMessage('assistant', reply, true);
+  } catch {
+    showTyping(false);
+    addMessage('assistant','⚠️ في مشكلة بالاتصال، جرب مرة ثانية.', false);
+  } finally {
+    document.getElementById('send-btn').disabled=false;
+    document.getElementById('msg-input').focus();
+  }
+}
+function showTyping(show) { document.getElementById('typing').classList.toggle('show',show); scrollBottom(); }
+function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,100)+'px'; document.getElementById('send-btn').disabled=!el.value.trim(); }
+function setInput(text) { const el=document.getElementById('msg-input'); el.value=text; autoResize(el); el.focus(); }
+
+// ─── START ───
+init();
+</script>
+</body>
+</html>
